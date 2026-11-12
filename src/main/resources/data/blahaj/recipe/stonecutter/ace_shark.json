@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:stonecutting",
+  "group": "plush_sharks",
+  "ingredient": "#blahaj:sharks",
+  "result": {
+    "id": "blahaj:ace_shark",
+    "count": 1
+  }
+}

@@ -1,0 +1,96 @@
+name: Build release artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example 4.0.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.ref }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ref: 1.20.6
+            java: '21'
+          - ref: 1.21
+            java: '21'
+          - ref: 1.21.1
+            java: '21'
+          - ref: 1.21.4
+            java: '21'
+          - ref: 1.21.5
+            java: '21'
+          - ref: 1.21.6
+            java: '21'
+          - ref: 1.21.7
+            java: '21'
+          - ref: 1.21.8
+            java: '21'
+          - ref: 1.21.10
+            java: '21'
+          - ref: 1.21.11
+            java: '21'
+          - ref: 1.21.11-neoforge
+            java: '21'
+          - ref: 26.1-fabric
+            java: '25'
+          - ref: 26.1-neoforge
+            java: '25'
+          - ref: 26.2-fabric
+            java: '25'
+          - ref: 26.2-neoforge
+            java: '25'
+          - ref: 26.3-fabric
+            java: '25'
+          - ref: 26.3-neoforge
+            java: '25'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out version branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Build
+        run: ./gradlew build --no-daemon
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: blahaj-${{ matrix.ref }}
+          path: build/libs/*
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Blahaj ${{ inputs.version }}
+          generate_release_notes: true
+          files: release-assets/*
